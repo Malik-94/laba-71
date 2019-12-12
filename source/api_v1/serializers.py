@@ -1,8 +1,8 @@
-from rest_framework import serializers
+from rest_framework.serializers import  ModelSerializer
 from webapp.models import Quote
 
 
-class QuoteSerializer(serializers.ModelSerializer):
+class QuoteSerializer(ModelSerializer):
     class Meta:
         model = Quote
-        fields = ('text', 'created_at', 'status', 'author_name', 'author_email', 'rating')
+        fields = ('id', 'text', 'created_at', 'status', 'author_name', 'author_email', 'rating')

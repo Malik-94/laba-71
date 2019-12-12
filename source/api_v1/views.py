@@ -1,14 +1,15 @@
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from api_v1.serializers import QuoteSerializer
-from rest_framework import viewsets
-from rest_framework.permissions import SAFE_METHODS, AllowAny
+from rest_framework.viewsets import ModelViewSet
 
-from webapp.models import Quote
+from api_v1.serializers import QuoteSerializer
+from webapp.models import Quote, QUOTE_APPROVED
 
 
 class LogoutView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         user = self.request.user
@@ -17,13 +18,40 @@ class LogoutView(APIView):
         return Response({'status': 'ok'})
 
 
-class QuoteViewSet(viewsets.ModelViewSet):
+class QuoteViewSet(ModelViewSet):
+    queryset = Quote.objects.none()
     serializer_class = QuoteSerializer
-    queryset = Quote.objects.all()
 
-    def get_permissions(self):
-        if self.request.method in SAFE_METHODS:
-            return []
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return Quote.objects.all()
+        return Quote.objects.filter(status=QUOTE_APPROVED)
 
-        return super().get_permissions()
+    # доступ к изменению и удалению цитат
+    # только для вошедших пользователей
+    # ...
+    # название точки входа для проверки
+    # доступно в: self.action
 
+    @action(methods=['post'], detail=True)
+    def rate_up(self, request, pk=None):
+        quote = self.get_object()
+        quote.rating += 1
+        quote.save()
+        return Response({'id': quote.pk, 'rating': quote.rating})
+
+
+    @action(methods=['post'], detail=True)
+    def rate_down(self, request, pk=None):
+        quote = self.get_object()
+        quote.rating -= 1
+        quote.save()
+        return Response({'id': quote.pk, 'rating': quote.rating})
+
+
+
+
+
+# здесь может понадобится точка входа для выдачи кодов и названий статусов,
+# чтобы передавать их на клиент с сервера, а не копировать в код клиента.
+# (по заданию не обязательно, но желательно).
