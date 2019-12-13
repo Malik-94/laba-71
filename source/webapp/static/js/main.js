@@ -63,7 +63,7 @@ function logOut() {
 }
 
 
-function createQuote(text, author_name, author_email,){
+function createQuoteForm(text, author_name, author_email,){
     const createntials = {text, author_name, author_email,};
     let request = makeRequest('quote/', 'post', false, createntials);
     request.done(function(data, status, response){
@@ -123,7 +123,7 @@ function setUpAuth() {
 function createQuoteForm(){
     quoteForm.on('submit', function(event) {
         event.preventDefault();
-        createQuote(textInput.val(),authorInput.val(),emailInput.val());
+        createQuoteForm(textInput.val(),authorInput.val(),emailInput.val());
     });
 
     createlink.on('click', function(event) {
@@ -151,7 +151,21 @@ function quoteDelete(id) {
     });
 }
 
-
+function quoteDetail(id){
+    let request =  makeRequest('quote/' + id, 'get', true);
+    request.done(function(item)
+    {
+        content.empty();
+        content.append($(`<div class="card" id="quote_${item.id}">
+                <p>${item.text}</p>
+                <p>${item.author}</p>
+               </div>`));
+    }
+    ).fail(function(response, status, message){
+        console.log('нет доступа');
+        console.log(response.responseText);
+    });
+}
 
 function checkAuth() {
     let token = getToken();
@@ -205,6 +219,7 @@ function getQuotes() {
                 <p><a href="#" class="btn btn-success" id="rate_up_${item.id}">+</a></p>
                 <p><a href="#" class="btn btn-danger" id="rate_down_${item.id}">-</a></p>
                 <p><a href="#" class="btn btn-danger" id="delete_${item.id}">Delete</a></p>
+                <p><a href="#" class="btn btn-danger" id="detail_${item.id}">deteil</a></p>
             </div>`));
             $('#rate_up_' + item.id).on('click', function(event) {
                 console.log('click');
@@ -217,8 +232,14 @@ function getQuotes() {
                 rateDown(item.id);
             });
              $('#delete_' + item.id).on('click', function (event) {
+                console.log('click');
                 event.preventDefault();
                 quoteDelete(item.id);
+            });
+             $('#detail_' + item.id).on('click', function(event) {
+                console.log('click');
+                event.preventDefault();
+                quoteDetail(item.id);
             });
         });
     }).fail(function(response, status, message) {
@@ -227,6 +248,8 @@ function getQuotes() {
     });
 }
 
+
+
 $(document).ready(function() {
     setUpGlobalVars();
     setUpAuth();
@@ -234,5 +257,6 @@ $(document).ready(function() {
     getQuotes();
     createQuoteForm();
     quoteDelete();
+    quoteDetail();
 
 });
