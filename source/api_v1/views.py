@@ -1,5 +1,5 @@
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -19,6 +19,7 @@ class LogoutView(APIView):
 
 
 class QuoteViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Quote.objects.none()
     serializer_class = QuoteSerializer
 
@@ -27,9 +28,12 @@ class QuoteViewSet(ModelViewSet):
             return Quote.objects.all()
         return Quote.objects.filter(status=QUOTE_APPROVED)
 
-    # доступ к изменению и удалению цитат
-    # только для вошедших пользователей
-    # ...
+    def get_permissions(self):
+        if self.action not in ['update', 'partial_update', 'destroy']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+
     # название точки входа для проверки
     # доступно в: self.action
 
@@ -47,6 +51,7 @@ class QuoteViewSet(ModelViewSet):
         quote.rating -= 1
         quote.save()
         return Response({'id': quote.pk, 'rating': quote.rating})
+
 
 
 
